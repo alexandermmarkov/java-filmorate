@@ -29,8 +29,12 @@ public class UserTest {
         User userRequest = new User(null, null, "testUserLogin", "Test user name",
                 LocalDate.now().minusYears(18));
 
-        Assertions.assertThrows(ValidationException.class, () -> userController.create(userRequest),
-                "Не выбрасывается исключение при добавлении пользователя без почты.");
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Assertions.assertEquals("email",
+                    factory.getValidator().validate(userRequest).stream().toList().getFirst()
+                            .getPropertyPath().toString(),
+                    "Не выбрасывается исключение при добавлении пользователя без почты.");
+        }
     }
 
     @Test
@@ -38,8 +42,12 @@ public class UserTest {
         User userRequest = new User(null, " ", "testUserLogin", "Test user name",
                 LocalDate.now().minusYears(18));
 
-        Assertions.assertThrows(ValidationException.class, () -> userController.create(userRequest),
-                "Не выбрасывается исключение при добавлении пользователя с пустой почтой.");
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Assertions.assertEquals("email",
+                    factory.getValidator().validate(userRequest).stream().toList().getFirst()
+                    .getPropertyPath().toString(),
+                    "Не выбрасывается исключение при добавлении пользователя с пустой почтой.");
+        }
     }
 
     @Test
@@ -48,9 +56,9 @@ public class UserTest {
                 "Test user name", LocalDate.now().minusYears(18));
 
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            Assertions.assertTrue(factory.getValidator().validate(userRequest).size() == 1
-                    && factory.getValidator().validate(userRequest).stream().toList().getFirst().getPropertyPath()
-                            .toString().equals("email"),
+            Assertions.assertEquals("email",
+                    factory.getValidator().validate(userRequest).stream().toList().getFirst()
+                    .getPropertyPath().toString(),
                     "Не выбрасывается исключение при добавлении пользователя с некорректной почтой.");
         }
     }

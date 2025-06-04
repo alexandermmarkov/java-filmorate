@@ -27,10 +27,6 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         // проверяем выполнение необходимых условий
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.error("user email = {}", user.getEmail());
-            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @.");
-        }
         if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             log.error("user login = {}", user.getLogin());
             throw new ValidationException("Логин не может быть пустым и содержать пробелы.");

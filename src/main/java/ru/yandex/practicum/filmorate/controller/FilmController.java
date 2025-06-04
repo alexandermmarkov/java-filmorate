@@ -28,10 +28,6 @@ public class FilmController {
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         // проверяем выполнение необходимых условий
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.error("film name = {}", film.getName());
-            throw new ValidationException("Название не может быть пустым.");
-        }
         if (film.getDescription() != null && film.getDescription().length() > 200) {
             log.error("film description length = {}", film.getDescription().length());
             throw new ValidationException("Максимальная длина описания — 200 символов.");

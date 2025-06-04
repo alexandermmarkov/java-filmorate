@@ -1,5 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.FilmController;
@@ -26,8 +28,12 @@ public class FilmTest {
         Film filmRequest = new Film(null, null, "Test film description",
                 LocalDate.now().minusDays(1), 90);
 
-        Assertions.assertThrows(ValidationException.class, () -> filmController.create(filmRequest),
-                "Не выбрасывается исключение при добавлении фильма без названия.");
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Assertions.assertEquals("name",
+                    factory.getValidator().validate(filmRequest).stream().toList().getFirst().getPropertyPath()
+                            .toString(),
+                    "Не выбрасывается исключение при добавлении фильма без названия.");
+        }
     }
 
     @Test
@@ -35,8 +41,12 @@ public class FilmTest {
         Film filmRequest = new Film(null, " ", "Test film description",
                 LocalDate.now().minusDays(1), 90);
 
-        Assertions.assertThrows(ValidationException.class, () -> filmController.create(filmRequest),
-                "Не выбрасывается исключение при добавлении фильма с пустым.");
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Assertions.assertEquals("name",
+                    factory.getValidator().validate(filmRequest).stream().toList().getFirst().getPropertyPath()
+                            .toString(),
+                    "Не выбрасывается исключение при добавлении фильма с пустым названием.");
+        }
     }
 
     @Test
