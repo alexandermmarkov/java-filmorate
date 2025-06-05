@@ -28,16 +28,9 @@ public class FilmController {
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         // проверяем выполнение необходимых условий
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            log.error("film description length = {}", film.getDescription().length());
-            throw new ValidationException("Максимальная длина описания — 200 символов.");
-        } else if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895,
-                Month.DECEMBER, 28))) {
+        if (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER, 28))) {
             log.error("film release date = {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года.");
-        } else if (film.getDuration() < 0) {
-            log.error("film duration = {}", film.getDuration());
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом.");
         }
         // формируем дополнительные данные
         film.setId(getNextId());

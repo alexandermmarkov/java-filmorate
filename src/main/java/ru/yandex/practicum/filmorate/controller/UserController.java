@@ -27,9 +27,9 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         // проверяем выполнение необходимых условий
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+        if (user.getLogin().contains(" ")) {
             log.error("user login = {}", user.getLogin());
-            throw new ValidationException("Логин не может быть пустым и содержать пробелы.");
+            throw new ValidationException("Логин не может содержать пробелы.");
         } else if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             log.error("user birthday = {}", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем.");

@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -10,9 +13,26 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Set;
 
 public class FilmTest {
-    private final FilmController filmController = new FilmController();
+    private Validator validator;
+    String messageException;
+    FilmController filmController = new FilmController();
+
+    @BeforeEach
+    public void beforeEach() {
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            validator = factory.getValidator();
+        }
+    }
+
+    public void readException(Film testFilm) {
+        Set<ConstraintViolation<Film>> violations = validator.validate(testFilm);
+        for (ConstraintViolation<Film> viol : violations) {
+            messageException = viol.getMessage();
+        }
+    }
 
     @Test
     void addNewNormalFilm() {
@@ -25,36 +45,31 @@ public class FilmTest {
 
     @Test
     void addNewNullNameFilm() {
-        Film filmRequest = new Film(null, null, "Test film description",
+        Film testFilm = new Film(null, null, "Test film description",
                 LocalDate.now().minusDays(1), 90);
+        readException(testFilm);
 
-        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            Assertions.assertEquals("name",
-                    factory.getValidator().validate(filmRequest).stream().toList().getFirst().getPropertyPath()
-                            .toString(),
-                    "Не выбрасывается исключение при добавлении фильма без названия.");
-        }
+        Assertions.assertEquals("Название фильма не может быть пустым", messageException,
+                "Не выбрасывается исключение при добавлении фильма без названия.");
     }
 
     @Test
     void addNewBlankNameFilm() {
-        Film filmRequest = new Film(null, " ", "Test film description",
+        Film testFilm = new Film(null, " ", "Test film description",
                 LocalDate.now().minusDays(1), 90);
+        readException(testFilm);
 
-        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            Assertions.assertEquals("name",
-                    factory.getValidator().validate(filmRequest).stream().toList().getFirst().getPropertyPath()
-                            .toString(),
-                    "Не выбрасывается исключение при добавлении фильма с пустым названием.");
-        }
+        Assertions.assertEquals("Название фильма не может быть пустым", messageException,
+                "Не выбрасывается исключение при добавлении фильма с пустым названием.");
     }
 
     @Test
     void addNewNegativeDurationFilm() {
-        Film filmRequest = new Film(null, "Test film name", "Test film description",
+        Film testFilm = new Film(null, "Test film name", "Test film description",
                 LocalDate.now().minusDays(1), -1);
+        readException(testFilm);
 
-        Assertions.assertThrows(ValidationException.class, () -> filmController.create(filmRequest),
+        Assertions.assertEquals("Продолжительность фильма должна быть положительным числом", messageException,
                 "Не выбрасывается исключение при добавлении фильма с отрицательной продолжительностью.");
     }
 
@@ -84,13 +99,14 @@ public class FilmTest {
 
     @Test
     void addNewTooLongDescriptionFilm() {
-        Film filmRequest = new Film(null,
+        Film testFilm = new Film(null,
                 "Test name", "Test description that takes more than 200 symbols for the test to fail." +
                 "Test description which takes more than 200 symbols for the test to fail. " +
                 "Test description which takes more than 200 symbols for the test to fail.",
                 LocalDate.now().minusDays(1), 90);
+        readException(testFilm);
 
-        Assertions.assertThrows(ValidationException.class, () -> filmController.create(filmRequest),
+        Assertions.assertEquals("Максимальная длина описания — 200 символов", messageException,
                 "Не выбрасывается исключение при добавлении фильма с отрицательной продолжительностью.");
     }
 

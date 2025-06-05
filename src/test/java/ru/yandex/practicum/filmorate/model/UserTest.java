@@ -1,17 +1,37 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 public class UserTest {
-    private final UserController userController = new UserController();
+    private Validator validator;
+    String messageException;
+    UserController userController = new UserController();
+
+    @BeforeEach
+    public void beforeEach() {
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            validator = factory.getValidator();
+        }
+    }
+
+    public void readException(User testUser) {
+        Set<ConstraintViolation<User>> violations = validator.validate(testUser);
+        for (ConstraintViolation<User> viol : violations) {
+            messageException = viol.getMessage();
+        }
+    }
 
     @Test
     void addNewNormalUser() {
@@ -45,7 +65,7 @@ public class UserTest {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Assertions.assertEquals("email",
                     factory.getValidator().validate(userRequest).stream().toList().getFirst()
-                    .getPropertyPath().toString(),
+                            .getPropertyPath().toString(),
                     "Не выбрасывается исключение при добавлении пользователя с пустой почтой.");
         }
     }
@@ -58,26 +78,28 @@ public class UserTest {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Assertions.assertEquals("email",
                     factory.getValidator().validate(userRequest).stream().toList().getFirst()
-                    .getPropertyPath().toString(),
+                            .getPropertyPath().toString(),
                     "Не выбрасывается исключение при добавлении пользователя с некорректной почтой.");
         }
     }
 
     @Test
     void addNewNullLoginUser() {
-        User userRequest = new User(null, "user@mail.com", null, "Test user name",
+        User testUser = new User(null, "user@mail.com", null, "Test user name",
                 LocalDate.now().minusYears(18));
+        readException(testUser);
 
-        Assertions.assertThrows(ValidationException.class, () -> userController.create(userRequest),
+        Assertions.assertEquals("Логин не может быть пустым", messageException,
                 "Не выбрасывается исключение при добавлении пользователя без логина.");
     }
 
     @Test
     void addNewEmptyLoginUser() {
-        User userRequest = new User(null, "user@mail.com", "", "Test user name",
+        User testUser = new User(null, "user@mail.com", " ", "Test user name",
                 LocalDate.now().minusYears(18));
+        readException(testUser);
 
-        Assertions.assertThrows(ValidationException.class, () -> userController.create(userRequest),
+        Assertions.assertEquals("Логин не может быть пустым", messageException,
                 "Не выбрасывается исключение при добавлении пользователя с пустым логином.");
     }
 
@@ -144,9 +166,9 @@ public class UserTest {
         User updatedUser = userController.update(userResponse);
 
         Assertions.assertTrue(updatedUser.getEmail().equals(userResponse.getEmail())
-                && updatedUser.getLogin().equals(userResponse.getLogin())
-                && updatedUser.getName().equals(userResponse.getName())
-                && updatedUser.getBirthday().isEqual(userResponse.getBirthday()),
+                        && updatedUser.getLogin().equals(userResponse.getLogin())
+                        && updatedUser.getName().equals(userResponse.getName())
+                        && updatedUser.getBirthday().isEqual(userResponse.getBirthday()),
                 "Пользователь не был обновлён.");
     }
 
