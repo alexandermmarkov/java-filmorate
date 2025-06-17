@@ -98,10 +98,6 @@ public class FilmService {
 
     public List<Film> getTopFilms(int count) {
         log.debug("count = {}", count);
-        if (count <= 0) {
-            throw new ValidationException("Некорректное значение параметра запроса count - должно быть " +
-                    "положительным.");
-        }
         return filmStorage.findAll().stream()
                 .sorted((film1, film2) -> Integer.compare(film2.getLikes().size(), film1.getLikes().size()))
                 .limit(count)

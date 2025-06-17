@@ -20,10 +20,10 @@ public class UserService {
 
     public User create(User user) {
         if (user.getLogin().contains(" ")) {
-            log.error("user login = {}", user.getLogin());
+            log.warn("user login = {}", user.getLogin());
             throw new ValidationException("Логин не может содержать пробелы.");
         } else if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("user birthday = {}", user.getBirthday());
+            log.warn("user birthday = {}", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем.");
         } else if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
@@ -37,17 +37,17 @@ public class UserService {
 
     public User update(User user) {
         if (user.getId() == null) {
-            log.error("no user id");
+            log.warn("no user id");
             throw new ValidationException("Id должен быть указан.");
         }
         if (userStorage.findById(user.getId()).isPresent()) {
             if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-                log.error("user email = {}", user.getEmail());
+                log.warn("user email = {}", user.getEmail());
                 throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @.");
             }
             return userStorage.update(user);
         }
-        log.error("no user with id = {}", user.getId());
+        log.warn("no user with id = {}", user.getId());
         throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден.");
     }
 
@@ -60,6 +60,7 @@ public class UserService {
     public User findById(Long userId) {
         Optional<User> user = userStorage.findById(userId);
         if (user.isEmpty()) {
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         return user.get();
@@ -67,7 +68,7 @@ public class UserService {
 
     public User delete(Long userId) {
         if (userStorage.findById(userId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         return userStorage.delete(userId);
@@ -75,11 +76,11 @@ public class UserService {
 
     public User addFriend(Long userId, Long friendId) {
         if (userStorage.findById(userId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         if (userStorage.findById(friendId).isEmpty()) {
-            log.error("no user with id = {}", friendId);
+            log.warn("no user with id = {}", friendId);
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
         }
         User user = userStorage.findById(userId).get();
@@ -91,11 +92,11 @@ public class UserService {
 
     public User deleteFriend(Long userId, Long friendId) {
         if (userStorage.findById(userId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         if (userStorage.findById(friendId).isEmpty()) {
-            log.error("no user with id = {}", friendId);
+            log.warn("no user with id = {}", friendId);
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
         }
         User user = userStorage.findById(userId).get();
@@ -107,7 +108,7 @@ public class UserService {
 
     public List<User> getAllFriends(Long userId) {
         if (userStorage.findById(userId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         User user = userStorage.findById(userId).get();
@@ -119,11 +120,11 @@ public class UserService {
 
     public List<User> getCommonFriends(Long userId, Long otherId) {
         if (userStorage.findById(userId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         if (userStorage.findById(otherId).isEmpty()) {
-            log.error("no user with id = {}", userId);
+            log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + otherId + " не найден.");
         }
         User user = userStorage.findById(userId).get();
