@@ -1,34 +1,55 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MPA;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserService userService;
 
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       UserService userService) {
+        this.filmStorage = filmStorage;
+        this.userService = userService;
+    }
+
     public Film create(Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER, 28))) {
+        if ((film.getReleaseDate() != null) && (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER,
+                28)))) {
             log.error("film release date = {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года.");
         }
-
-        film.setId(filmStorage.getNextId());
-        log.debug("film id = {}", film.getId());
+        if (film.getMpa() != null) {
+            Optional<MPA> mpa = filmStorage.findMPAById(film.getMpa().getId());
+            if (mpa.isEmpty()) {
+                log.error("no MPA rating with id = {}", film.getMpa().getId());
+                throw new NotFoundException("Рейтинг с id = " + film.getMpa().getId() + " не найден.");
+            }
+        }
+        if (!film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                Optional<Genre> tableGenre = filmStorage.findGenreById(genre.getId());
+                if (tableGenre.isEmpty()) {
+                    log.error("no genre with id = {}", genre.getId());
+                    throw new NotFoundException("Жанр с id = " + genre.getId() + " не найден.");
+                }
+            }
+        }
         return filmStorage.create(film);
     }
 
@@ -72,35 +93,27 @@ public class FilmService {
     }
 
     public Film likeAFilm(Long filmId, Long userId) {
-        if (filmStorage.findById(filmId).isEmpty()) {
+        Optional<Film> film = filmStorage.findById(filmId);
+        if (film.isEmpty()) {
             log.error("no film with id = {}", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
         }
-        Film film = filmStorage.findById(filmId).get();
-        if (userService.findById(userId) != null) {
-            film.getLikes().add(userId);
-        }
-        return film;
+        User user = userService.findById(userId);
+        return filmStorage.likeAFilm(filmId, userId).get();
     }
 
     public Film unlikeAFilm(Long filmId, Long userId) {
-        if (filmStorage.findById(filmId).isEmpty()) {
+        Optional<Film> film = filmStorage.findById(filmId);
+        if (film.isEmpty()) {
             log.error("no film with id = {}", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден.");
         }
-        Film film = filmStorage.findById(filmId).get();
-        if (userService.findById(userId) != null) {
-            film.getLikes().remove(userId);
-        }
-        film.getLikes().remove(userId);
-        return film;
+        User user = userService.findById(userId);
+        return filmStorage.unlikeAFilm(filmId, userId).get();
     }
 
     public List<Film> getTopFilms(int count) {
         log.debug("count = {}", count);
-        return filmStorage.findAll().stream()
-                .sorted((film1, film2) -> Integer.compare(film2.getLikes().size(), film1.getLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getTopFilms(count);
     }
 }

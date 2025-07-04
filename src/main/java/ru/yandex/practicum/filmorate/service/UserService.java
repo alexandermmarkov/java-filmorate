@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -13,10 +13,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserService {
     private final UserStorage userStorage;
+
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public User create(User user) {
         if (user.getLogin().contains(" ")) {
@@ -83,11 +86,7 @@ public class UserService {
             log.warn("no user with id = {}", friendId);
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
         }
-        User user = userStorage.findById(userId).get();
-        User friend = userStorage.findById(friendId).get();
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
-        return friend;
+        return userStorage.addFriend(userId, friendId);
     }
 
     public User deleteFriend(Long userId, Long friendId) {
@@ -99,11 +98,7 @@ public class UserService {
             log.warn("no user with id = {}", friendId);
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
         }
-        User user = userStorage.findById(userId).get();
-        User friend = userStorage.findById(friendId).get();
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
-        return friend;
+        return userStorage.deleteFriend(userId, friendId);
     }
 
     public List<User> getAllFriends(Long userId) {
@@ -111,28 +106,21 @@ public class UserService {
             log.warn("no user with id = {}", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
         }
-        User user = userStorage.findById(userId).get();
-        return user.getFriends().stream()
-                .filter(friendId -> userStorage.findById(friendId).isPresent())
-                .map(friendId -> userStorage.findById(friendId).get())
-                .toList();
+        return userStorage.getFriends(userStorage.findById(userId).get());
     }
 
-    public List<User> getCommonFriends(Long userId, Long otherId) {
-        if (userStorage.findById(userId).isEmpty()) {
-            log.warn("no user with id = {}", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+    public List<User> getCommonFriends(Long userId1, Long userId2) {
+        Optional<User> optionalUser1 = userStorage.findById(userId1);
+        if (optionalUser1.isEmpty()) {
+            log.warn("no user with id = {}", userId1);
+            throw new NotFoundException("Пользователь с id = " + userId1 + " не найден.");
         }
-        if (userStorage.findById(otherId).isEmpty()) {
-            log.warn("no user with id = {}", userId);
-            throw new NotFoundException("Пользователь с id = " + otherId + " не найден.");
+
+        Optional<User> optionalUser2 = userStorage.findById(userId2);
+        if (optionalUser2.isEmpty()) {
+            log.warn("no user with id = {}", userId2);
+            throw new NotFoundException("Пользователь с id = " + userId2 + " не найден.");
         }
-        User user = userStorage.findById(userId).get();
-        User other = userStorage.findById(otherId).get();
-        return user.getFriends().stream()
-                .filter(friendId -> other.getFriends().contains(friendId)
-                        && userStorage.findById(friendId).isPresent())
-                .map(friendId -> userStorage.findById(friendId).get())
-                .toList();
+        return userStorage.getCommonFriends(userId1, userId2);
     }
 }

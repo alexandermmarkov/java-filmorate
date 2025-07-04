@@ -1,12 +1,18 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
+@Slf4j
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
 
@@ -34,9 +40,13 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User delete(Long userId) {
-        User user = users.get(userId);
+        Optional<User> user = findById(userId);
+        if (user.isEmpty()) {
+            log.warn("no user with id = {}", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+        }
         users.remove(userId);
-        return user;
+        return user.get();
     }
 
     @Override
@@ -49,7 +59,62 @@ public class InMemoryUserStorage implements UserStorage {
         return Optional.ofNullable(users.get(filmId));
     }
 
-    public long getNextId() {
+    @Override
+    public User addFriend(Long userId, Long friendId) {
+        Optional<User> optionalUser = findById(userId);
+        if (optionalUser.isEmpty()) {
+            log.warn("no user with id = {}", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+        }
+        User user = optionalUser.get();
+
+        Optional<User> optionalFriend = findById(friendId);
+        if (optionalFriend.isEmpty()) {
+            log.warn("no user with id = {}", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
+        }
+        User friend = optionalFriend.get();
+        user.getFriends().add(friend);
+        return user;
+    }
+
+    @Override
+    public User deleteFriend(Long userId, Long friendId) {
+        Optional<User> optionalUser = findById(userId);
+        if (optionalUser.isEmpty()) {
+            log.warn("no user with id = {}", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден.");
+        }
+        User user = optionalUser.get();
+
+        Optional<User> optionalFriend = findById(friendId);
+        if (optionalFriend.isEmpty()) {
+            log.warn("no user with id = {}", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден.");
+        }
+        User friend = optionalFriend.get();
+        user.getFriends().remove(friend);
+        return user;
+    }
+
+    @Override
+    public List<User> getFriends(User user) {
+        return user.getFriends().stream().toList();
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long userId1, Long userId2) {
+        User user = findById(userId1).get();
+        User other = findById(userId2).get();
+        List<User> getUserFriends = getFriends(user);
+        List<User> getOtherUserFriends = getFriends(other);
+        return getUserFriends.stream()
+                .filter(getOtherUserFriends::contains)
+                .toList();
+    }
+
+    @Override
+    public Long getNextId() {
         long currentMaxId = users.keySet()
                 .stream()
                 .mapToLong(id -> id)

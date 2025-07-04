@@ -42,7 +42,7 @@ public class FilmTest {
     @Test
     void addNewNormalFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
 
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
@@ -51,7 +51,7 @@ public class FilmTest {
     @Test
     void addNewNullNameFilm() {
         Film testFilm = new Film(null, null, "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         readException(testFilm);
 
         Assertions.assertEquals("Название фильма не может быть пустым", messageException,
@@ -61,7 +61,7 @@ public class FilmTest {
     @Test
     void addNewBlankNameFilm() {
         Film testFilm = new Film(null, " ", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         readException(testFilm);
 
         Assertions.assertEquals("Название фильма не может быть пустым", messageException,
@@ -71,7 +71,7 @@ public class FilmTest {
     @Test
     void addNewNegativeDurationFilm() {
         Film testFilm = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), -1);
+                LocalDate.now().minusDays(1), -1, null);
         readException(testFilm);
 
         Assertions.assertEquals("Продолжительность фильма должна быть положительным числом", messageException,
@@ -81,7 +81,7 @@ public class FilmTest {
     @Test
     void addNewZeroDurationFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 0);
+                LocalDate.now().minusDays(1), 0, null);
         Film filmResponse = filmController.create(filmRequest);
 
         Assertions.assertDoesNotThrow(() -> filmController.create(filmRequest),
@@ -96,7 +96,7 @@ public class FilmTest {
                 "Test name", "Test description of 200 symbols Test description of 200 symbols Test " +
                 "description of 200 symbols Test description of 200 symbols Test description of 200 symbols Test " +
                 "description of 200 symbols.........",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
 
         Assertions.assertDoesNotThrow(() -> filmController.create(filmRequest),
                 "Выбрасывается исключение при добавлении фильма с описанием в 200 символов.");
@@ -108,7 +108,7 @@ public class FilmTest {
                 "Test name", "Test description that takes more than 200 symbols for the test to fail." +
                 "Test description which takes more than 200 symbols for the test to fail. " +
                 "Test description which takes more than 200 symbols for the test to fail.",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         readException(testFilm);
 
         Assertions.assertEquals("Максимальная длина описания — 200 символов", messageException,
@@ -119,7 +119,7 @@ public class FilmTest {
     void addNewTooEarlyFilm() {
         Film filmRequest = new Film(null,
                 "Test name", "Test description", LocalDate.of(1895, Month.DECEMBER, 27),
-                90);
+                90, null);
 
         Assertions.assertThrows(ValidationException.class, () -> filmController.create(filmRequest),
                 "Не выбрасывается исключение при добавлении фильма с датой до 28 декабря 1895 года.");
@@ -129,7 +129,7 @@ public class FilmTest {
     void addNew28Dec1895Film() {
         Film filmRequest = new Film(null,
                 "Test name", "Test description", LocalDate.of(1895, Month.DECEMBER, 28),
-                90);
+                90, null);
 
         Assertions.assertDoesNotThrow(() -> filmController.create(filmRequest),
                 "Выбрасывается исключение при добавлении фильма с датой 28 декабря 1895 года.");
@@ -138,7 +138,7 @@ public class FilmTest {
     @Test
     void updateNormalFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -156,7 +156,7 @@ public class FilmTest {
     @Test
     void updateNullNameFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -169,7 +169,7 @@ public class FilmTest {
     @Test
     void updateBlankNameFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -182,7 +182,7 @@ public class FilmTest {
     @Test
     void updateNullDescriptionFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -196,7 +196,7 @@ public class FilmTest {
     @Test
     void updateBlankDescriptionFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -210,7 +210,7 @@ public class FilmTest {
     @Test
     void updateNegativeDurationFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -224,7 +224,7 @@ public class FilmTest {
     @Test
     void updateNullReleaseDateFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -238,7 +238,7 @@ public class FilmTest {
     @Test
     void updateTooEarlyReleaseDateFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -252,7 +252,7 @@ public class FilmTest {
     @Test
     void updateNullIDFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -265,7 +265,7 @@ public class FilmTest {
     @Test
     void updateUknownIDFilm() {
         Film filmRequest = new Film(null, "Test film name", "Test film description",
-                LocalDate.now().minusDays(1), 90);
+                LocalDate.now().minusDays(1), 90, null);
         Film filmResponse = filmController.create(filmRequest);
         Assertions.assertEquals(filmRequest, filmResponse, "Фильм в запросе отличается от возвращаемого.");
 
@@ -276,11 +276,30 @@ public class FilmTest {
     }
 
     @Test
+    void deleteExistingFilm() {
+        Film filmRequest = new Film(null, "Test film name", "Test film description",
+                LocalDate.now().minusDays(1), 90, null);
+        Film filmResponse = filmController.create(filmRequest);
+        Assertions.assertNotNull(filmController.findById(filmResponse.getId()), "Фильм не был добавлен.");
+
+        Film deletedFilm = filmController.delete(filmResponse.getId());
+
+        Assertions.assertThrows(NotFoundException.class, () -> filmController.findById(deletedFilm.getId()),
+                "Не выбрасывается исключение при поиске удалённого фильма.");
+    }
+
+    @Test
+    void deleteUnknownFilm() {
+        Assertions.assertThrows(NotFoundException.class, () -> filmController.findById(0L),
+                "Не выбрасывается исключение при поиске неизвестного фильма.");
+    }
+
+    @Test
     void findAllFilms() {
         Film filmRequest1 = new Film(null, "Test film name 1", "Test film description 1",
-                LocalDate.now().minusDays(2), 90);
+                LocalDate.now().minusDays(2), 90, null);
         Film filmRequest2 = new Film(null, "Test film name 2", "Test film description 2",
-                LocalDate.now().minusDays(1), 180);
+                LocalDate.now().minusDays(1), 180, null);
         Film filmResponse1 = filmController.create(filmRequest1);
         Film filmResponse2 = filmController.create(filmRequest2);
 
