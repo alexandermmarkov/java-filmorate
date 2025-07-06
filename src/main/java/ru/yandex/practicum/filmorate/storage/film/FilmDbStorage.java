@@ -114,6 +114,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         String sql = "SELECT id FROM genres";
         List<Long> genreIds = jdbc.queryForList(sql, Long.class);
+
         return new ArrayList<>(genres)
                 .stream()
                 .map(Genre::getId)

@@ -56,9 +56,24 @@ public class FilmService {
             throw new ValidationException("Id должен быть указан.");
         }
         if (filmStorage.findById(film.getId()).isPresent()) {
-            if (film.getName() == null || film.getName().isBlank()) {
-                log.error("film name = {}", film.getName());
-                throw new ValidationException("Название не может быть пустым.");
+            if ((film.getReleaseDate() != null) && (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER,
+                    28)))) {
+                log.error("film release date = {}", film.getReleaseDate());
+                throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года.");
+            }
+            if (film.getMpa() != null) {
+                Optional<MPA> mpa = filmStorage.findMPAById(film.getMpa().getId());
+                if (mpa.isEmpty()) {
+                    log.error("no MPA rating with id = {}", film.getMpa().getId());
+                    throw new NotFoundException("Рейтинг с id = " + film.getMpa().getId() + " не найден.");
+                }
+            }
+            if (!film.getGenres().isEmpty()) {
+                List<Long> unknownGenres = filmStorage.findUnknownFilmGenres(film.getGenres());
+                if (!unknownGenres.isEmpty()) {
+                    log.error("no genres with id = {}", unknownGenres);
+                    throw new NotFoundException("Жанры с id = " + unknownGenres + " не найдены.");
+                }
             }
             return filmStorage.update(film);
         }
