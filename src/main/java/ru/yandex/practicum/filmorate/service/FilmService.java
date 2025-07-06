@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -42,12 +41,10 @@ public class FilmService {
             }
         }
         if (!film.getGenres().isEmpty()) {
-            for (Genre genre : film.getGenres()) {
-                Optional<Genre> tableGenre = filmStorage.findGenreById(genre.getId());
-                if (tableGenre.isEmpty()) {
-                    log.error("no genre with id = {}", genre.getId());
-                    throw new NotFoundException("Жанр с id = " + genre.getId() + " не найден.");
-                }
+            List<Long> unknownGenres = filmStorage.findUnknownFilmGenres(film.getGenres());
+            if (!unknownGenres.isEmpty()) {
+                log.error("no genres with id = {}", unknownGenres);
+                throw new NotFoundException("Жанры с id = " + unknownGenres + " не найдены.");
             }
         }
         return filmStorage.create(film);

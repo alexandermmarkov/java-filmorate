@@ -34,7 +34,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             "JOIN friends f1 ON u.id = f1.friend_id " +
             "JOIN friends f2 ON u.id = f2.friend_id " +
             "WHERE f1.user_id = ? AND f2.user_id = ?";
-    private Long lastId = 0L;
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper, User.class);
@@ -42,7 +41,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User create(User user) {
-        lastId = insert(
+        Long lastId = insert(
                 INSERT_QUERY,
                 user.getEmail(),
                 user.getLogin(),
@@ -112,11 +111,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     @Override
     public List<User> getCommonFriends(Long userId1, Long userId2) {
         return findMany(GET_COMMON_FRIENDS_SQL, userId1, userId2);
-    }
-
-    @Override
-    public Long getNextId() {
-        return ++lastId;
     }
 
     protected void getReferences(User user) {

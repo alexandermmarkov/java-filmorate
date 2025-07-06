@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.storage.mappers.MPARowMapper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +42,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "duration = ?, mpa_id = ? WHERE id = ?";
     private static final String INSERT_GENRE_QUERY = "INSERT INTO film_genres SET film_id = ?, genre_id = ?";
     private static final String DELETE_QUERY = "DELETE FROM films WHERE id = ?";
-    private Long lastId = 0L;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper, Film.class);
@@ -49,7 +49,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        lastId = insert(
+        Long lastId = insert(
                 INSERT_QUERY,
                 film.getName(),
                 film.getDescription(),
@@ -57,7 +57,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getDuration(),
                 film.getMpa() != null ? film.getMpa().getId() : null
         );
-        film.getGenres().forEach(genre -> insert(INSERT_GENRE_QUERY, lastId, genre.getId()));
+        batchGenreUpdate(lastId, film.getGenres().stream().toList());
         film.setId(lastId);
         return film;
     }
@@ -107,6 +107,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
+    public List<Long> findUnknownFilmGenres(List<Genre> genres) {
+        if (genres.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String sql = "SELECT id FROM genres";
+        List<Long> genreIds = jdbc.queryForList(sql, Long.class);
+        return new ArrayList<>(genres)
+                .stream()
+                .map(Genre::getId)
+                .filter(genreId -> !genreIds.contains(genreId))
+                .toList();
+    }
+
+    @Override
     public List<Film> findAll() {
         return findMany(
                 FIND_ALL_QUERY
@@ -132,22 +147,31 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return topFilms;
     }
 
-    protected void getReferences(Film film) {
+    private void getReferences(Film film) {
         queryForOptional(FIND_MPA_BY_FILM_ID, new MPARowMapper(), film.getId()).ifPresent(film::setMpa);
         film.getGenres().addAll(jdbc.query(FIND_GENRES_BY_FILM_ID, new GenreRowMapper(), film.getId()));
         film.getLikes().addAll(jdbc.queryForList(FIND_LIKES_BY_FILM_ID, Long.class, film.getId()));
     }
 
-    @Override
-    public Long getNextId() {
-        return ++lastId;
-    }
-
-    public <T> Optional<T> queryForOptional(String sql, RowMapper<T> rowMapper, Object... args) {
+    private <T> Optional<T> queryForOptional(String sql, RowMapper<T> rowMapper, Object... args) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(sql, rowMapper, args));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    private void batchGenreUpdate(Long filmId, final List<Genre> genres) {
+        List<Object[]> batch = new ArrayList<>();
+        for (Genre genre : genres) {
+            Object[] values = new Object[]{
+                    filmId, genre.getId()
+            };
+            batch.add(values);
+        }
+        jdbc.batchUpdate(
+                INSERT_GENRE_QUERY,
+                batch
+        );
     }
 }

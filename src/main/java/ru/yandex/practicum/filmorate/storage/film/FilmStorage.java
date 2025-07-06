@@ -20,6 +20,8 @@ public interface FilmStorage {
 
     Optional<Genre> findGenreById(Long genreId);
 
+    List<Long> findUnknownFilmGenres(List<Genre> genres);
+
     List<Film> findAll();
 
     Optional<Film> likeAFilm(Long filmId, Long userId);
@@ -27,6 +29,4 @@ public interface FilmStorage {
     Optional<Film> unlikeAFilm(Long filmId, Long userId);
 
     List<Film> getTopFilms(int count);
-
-    Long getNextId();
 }

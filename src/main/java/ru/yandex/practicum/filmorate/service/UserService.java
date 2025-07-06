@@ -33,7 +33,6 @@ public class UserService {
             log.debug("empty name, it equals login now - {}", user.getLogin());
         }
 
-        user.setId(userStorage.getNextId());
         log.debug("user id = {}", user.getId());
         return userStorage.create(user);
     }
